@@ -1,0 +1,52 @@
+name: Monorepo Split
+
+on:
+    push:
+        branches: [main]
+        tags: ['*']
+
+env:
+    GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+
+jobs:
+    packages_split:
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                package:
+                    -
+                        local_path: 'src/Rpc'
+                        split_repository: 'rpc'
+                    -
+                        local_path: 'src/RpcClient'
+                        split_repository: 'rpc-client'
+                    -
+                        local_path: 'src/RpcServer'
+                        split_repository: 'rpc-server'
+
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            # ─── On commit push (no tag) ─────────────────────
+            - if: "!startsWith(github.ref, 'refs/tags/')"
+              uses: danharrin/monorepo-split-github-action@v2.4.5
+              with:
+                  package_directory: ${{ matrix.package.local_path }}
+                  repository_organization: 'php-websocket-rpc'
+                  repository_name: ${{ matrix.package.split_repository }}
+                  user_name: 'php-websocket-rpc-bot'
+                  user_email: 'bot@php-websocket-rpc.dev'
+
+            # ─── On tag (release) ────────────────────────────
+            - if: "startsWith(github.ref, 'refs/tags/')"
+              uses: danharrin/monorepo-split-github-action@v2.4.5
+              with:
+                  tag: ${GITHUB_REF#refs/tags/}
+                  package_directory: ${{ matrix.package.local_path }}
+                  repository_organization: 'php-websocket-rpc'
+                  repository_name: ${{ matrix.package.split_repository }}
+                  user_name: 'php-websocket-rpc-bot'
+                  user_email: 'bot@php-websocket-rpc.dev'

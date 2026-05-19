@@ -1,0 +1,5 @@
+/vendor/
+/composer.lock
+
+# Self-signed certs for WSS examples — generate your own
+/examples/certs/

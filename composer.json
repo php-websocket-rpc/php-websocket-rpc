@@ -1,0 +1,40 @@
+{
+    "name": "php-websocket-rpc/php-websocket-rpc",
+    "description": "Monorepo for PHP RPC over WebSocket — packages: rpc, rpc-client, rpc-server",
+    "type": "project",
+    "require": {
+        "amphp/amp": "^3",
+        "amphp/http-server": "^3",
+        "amphp/http-server-router": "^2",
+        "amphp/websocket-client": "^2",
+        "amphp/websocket-server": "^4",
+        "ext-msgpack": "*",
+        "php": ">=8.5",
+        "psr/log": "^3",
+        "friendsofphp/proxy-manager-lts": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PhpWebsocketRpc\\RpcClient\\": "src/RpcClient/",
+            "PhpWebsocketRpc\\RpcServer\\": "src/RpcServer/",
+            "PhpWebsocketRpc\\Rpc\\": "src/Rpc/"
+        }
+    },
+    "require-dev": {
+        "amphp/log": "^2",
+        "monorepo-php/monorepo": "^12.7",
+        "phpunit/phpunit": "^11"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PhpWebsocketRpc\\RpcClient\\Tests\\": "src/RpcClient/Tests/",
+            "PhpWebsocketRpc\\RpcServer\\Tests\\": "src/RpcServer/Tests/",
+            "PhpWebsocketRpc\\Rpc\\Tests\\": "src/Rpc/Tests/"
+        }
+    },
+    "replace": {
+        "php-websocket-rpc/rpc": "self.version",
+        "php-websocket-rpc/rpc-client": "self.version",
+        "php-websocket-rpc/rpc-server": "self.version"
+    }
+}
