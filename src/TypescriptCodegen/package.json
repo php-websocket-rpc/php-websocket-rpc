@@ -39,7 +39,7 @@
     },
     "dependencies": {
         "commander": "^14",
-        "glob": "^11",
+        "glob": "^13",
         "php-parser": "^3.6"
     }
 }
