@@ -1,5 +1,30 @@
+# Dependencies
 /vendor/
-/composer.lock
+node_modules/
+
+# Build output
+dist/
+src/*/dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+#.idea/
+.vscode/
+*.swp
+*.swo
+
+# PHP
+composer.lock
+.phpunit.result.cache
+
+# Node
+package-lock.json
 
 # Self-signed certs for WSS examples — generate your own
 /examples/certs/
+
+# Logs
+*.log

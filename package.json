@@ -1,0 +1,20 @@
+{
+    "name": "php-websocket-rpc",
+    "private": true,
+    "workspaces": [
+        "src/TypescriptRpcClient",
+        "src/TypescriptCodegen"
+    ],
+    "scripts": {
+        "build": "npm run build --workspaces",
+        "test": "vitest run --passWithNoTests",
+        "test:watch": "vitest",
+        "typecheck": "tsc -p src/TypescriptRpcClient/tsconfig.json --noEmit && tsc -p src/TypescriptCodegen/tsconfig.json --noEmit",
+        "sync:versions": "node scripts/sync-versions.mjs"
+    },
+    "devDependencies": {
+        "@types/node": "^22",
+        "typescript": "^5",
+        "vitest": "^3"
+    }
+}

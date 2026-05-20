@@ -1,0 +1,69 @@
+name: Release npm Packages
+
+on:
+    push:
+        branches: [main]         # publishes dev versions
+        tags: ['v*']             # publishes stable versions
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '22'
+                  registry-url: 'https://registry.npmjs.org'
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build all packages
+              run: npm run build
+
+            - name: Run tests
+              run: npm test
+
+            - name: Determine release type
+              id: release-type
+              run: |
+                  if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+                      echo "mode=stable" >> "$GITHUB_OUTPUT"
+                      echo "npm-tag=latest" >> "$GITHUB_OUTPUT"
+                      echo "version=$(node -p "require('./src/TypescriptRpcClient/package.json').version")" >> "$GITHUB_OUTPUT"
+                  else
+                      VERSION=$(node -p "require('./src/TypescriptRpcClient/package.json').version")
+                      DATE=$(date +%Y%m%d)
+                      SHA=$(git rev-parse --short HEAD)
+                      echo "mode=dev" >> "$GITHUB_OUTPUT"
+                      echo "npm-tag=dev" >> "$GITHUB_OUTPUT"
+                      echo "version=${VERSION}-dev.${DATE}.${SHA}" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Publish @php-websocket-rpc/client
+              run: |
+                  if [[ "${{ steps.release-type.outputs.mode }}" == "dev" ]]; then
+                      cd src/TypescriptRpcClient
+                      npm version ${{ steps.release-type.outputs.version }} --no-git-tag-version
+                      npm publish --tag ${{ steps.release-type.outputs.npm-tag }} --access public
+                  else
+                      npm publish -w src/TypescriptRpcClient --access public
+                  fi
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+            - name: Publish @php-websocket-rpc/codegen
+              run: |
+                  if [[ "${{ steps.release-type.outputs.mode }}" == "dev" ]]; then
+                      cd src/TypescriptCodegen
+                      npm version ${{ steps.release-type.outputs.version }} --no-git-tag-version
+                      npm publish --tag ${{ steps.release-type.outputs.npm-tag }} --access public
+                  else
+                      npm publish -w src/TypescriptCodegen --access public
+                  fi
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

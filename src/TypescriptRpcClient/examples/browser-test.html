@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RPC Contract Browser Test</title>
+<style>
+  body { font-family: monospace; background: #1e1e1e; color: #d4d4d4; padding: 20px; }
+  h1 { color: #569cd6; }
+  h2 { color: #4ec9b0; border-bottom: 1px solid #333; padding-bottom: 4px; }
+  .pass { color: #6a9955; }
+  .fail { color: #f44747; }
+  .info { color: #9cdcfe; }
+  #log { background: #252526; padding: 16px; border-radius: 6px; max-height: 80vh; overflow-y: auto; }
+  .entry { margin: 2px 0; }
+  button { background: #0e639c; color: #fff; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+  button:hover { background: #1177bb; }
+  button:disabled { background: #555; cursor: default; }
+</style>
+</head>
+<body>
+<h1>🔌 RPC Contract Browser Test</h1>
+<p>Connects to <code>ws://127.0.0.1:9502/rpc</code> — start the PHP server first:</p>
+<pre style="background:#252526;padding:8px;border-radius:4px;">php examples/contract_server.php</pre>
+<button id="runBtn" onclick="runTest()">▶ Run Test</button>
+<div id="log"></div>
+
+<script src="../dist/browser.js"></script>
+<script>
+const { RpcClient } = PhpWebsocketRpc;
+
+const logDiv = document.getElementById('log');
+const runBtn = document.getElementById('runBtn');
+
+function log(msg, cls = '') {
+  const div = document.createElement('div');
+  div.className = 'entry ' + cls;
+  div.textContent = msg;
+  logDiv.appendChild(div);
+  logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+function assert(condition, msg) {
+  if (condition) {
+    log('  ✓ ' + msg, 'pass');
+  } else {
+    log('  ✗ FAIL: ' + msg, 'fail');
+    throw new Error('Assertion failed: ' + msg);
+  }
+}
+
+async function runTest() {
+  runBtn.disabled = true;
+  logDiv.innerHTML = '';
+
+  try {
+    // ─── Connect ──────────────────────────────────────────────
+
+    log('Connecting to ws://127.0.0.1:9502/rpc...', 'info');
+    const client = await RpcClient.connect('ws://127.0.0.1:9502/rpc');
+    log('✓ Connected\n', 'pass');
+
+    // ─── 1. Call/Response ─────────────────────────────────────
+
+    log('═══ Call/Response Pattern ═══', 'info');
+    const math = client.createProxy({
+      service: 'MathService',
+    });
+
+    let result = await math.add(10, 5);
+    log('math.add(10, 5) = ' + result);
+    assert(result === 15, 'add(10, 5) should be 15');
+
+    result = await math.sub(10, 5);
+    log('math.sub(10, 5) = ' + result);
+    assert(result === 5, 'sub(10, 5) should be 5');
+
+    result = await math.mul(3, 4);
+    log('math.mul(3, 4) = ' + result);
+    assert(result === 12, 'mul(3, 4) should be 12');
+
+    // ─── 2. Notification ──────────────────────────────────────
+
+    log('\n═══ Notification Pattern ═══', 'info');
+    math.log('Hello from browser client!');
+    math.log('Fire-and-forget notification works');
+    log('✓ Notifications sent (no response expected)\n', 'pass');
+
+    // ─── 3. Streaming ─────────────────────────────────────────
+
+    log('═══ Streaming Pattern ═══', 'info');
+    const numbers = client.createProxy({
+      service: 'NumberStreamService',
+      stream: ['count'],
+    });
+
+    const collected = [];
+    const stream = numbers.count(10);
+    for await (const value of stream) {
+      collected.push(value);
+      log('  Received: ' + value);
+    }
+    log('Collected: [' + collected.join(', ') + ']');
+    assert(collected.length === 10, 'Should get 10 items');
+    assert(collected[0] === 0, 'First item should be 0');
+    assert(collected[9] === 9, 'Last item should be 9');
+    log('✓ Stream complete\n', 'pass');
+
+    // ─── 4. Subscribe + Publish (Chat) ────────────────────────
+
+    log('═══ Chat: Subscribe + Publish ═══', 'info');
+    const chat = client.createProxy({
+      service: 'ChatService',
+      subscribe: ['onMessage'],
+      publish: ['send'],
+      channel: 'chat', // matches #[RpcPublish('chat')]
+    });
+
+    const chatMessages = [];
+    chat.onMessage((msg) => {
+      chatMessages.push(msg);
+      log('  Chat received: ' + msg);
+    });
+
+    // Publish — server echoes back
+    chat.send('Hello from browser!');
+    // Wait a bit for the echo
+    await new Promise(r => setTimeout(r, 500));
+    log('Chat messages received: ' + chatMessages.length);
+    if (chatMessages.length > 0) {
+      log('  - ' + chatMessages.join('\n  - '));
+      log('✓ Chat publish/subscribe works\n', 'pass');
+    } else {
+      log('  (no messages yet — events may arrive after delay)', 'info');
+    }
+
+    // ─── 5. Subscribe (event timer) ───────────────────────────
+
+    log('═══ Subscription Pattern ═══', 'info');
+    const events = client.createProxy({
+      service: 'EventService',
+      subscribe: ['onEvent'],
+      channel: 'events',
+    });
+
+    const received = [];
+    events.onEvent((evt) => {
+      received.push(evt);
+      log('  Callback received: ' + evt);
+    });
+
+    // Wait for server-triggered events (server fires every 3s)
+    log('Waiting for server events (6 seconds)...', 'info');
+    await new Promise(r => setTimeout(r, 6500));
+    log('Received ' + received.length + ' events: [' + received.join(', ') + ']');
+    if (received.length >= 1) {
+      log('✓ Subscription works\n', 'pass');
+    } else {
+      log('  (no events yet — server may need more time)', 'info');
+    }
+
+    // ─── Cleanup ──────────────────────────────────────────────
+
+    client.close();
+    log('\n✓ All tests completed!', 'pass');
+
+  } catch (err) {
+    log('\n✗ Error: ' + (err.message || err), 'fail');
+    console.error(err);
+  } finally {
+    runBtn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

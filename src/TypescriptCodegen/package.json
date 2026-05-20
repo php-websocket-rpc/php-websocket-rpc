@@ -1,0 +1,35 @@
+{
+    "name": "@php-websocket-rpc/codegen",
+    "version": "0.1.0",
+    "description": "Generates typed TypeScript interfaces and proxy configs from PHP RPC contract interfaces",
+    "license": "MIT",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "bin": {
+        "php-rpc-codegen": "./bin/php-rpc-codegen"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "files": [
+        "dist/",
+        "bin/"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "test": "vitest run",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "commander": "^13",
+        "glob": "^11",
+        "php-parser": "^3.6"
+    }
+}

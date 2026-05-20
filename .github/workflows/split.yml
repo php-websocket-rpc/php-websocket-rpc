@@ -24,6 +24,12 @@ jobs:
                     -
                         local_path: 'src/RpcServer'
                         split_repository: 'rpc-server'
+                    -
+                        local_path: 'src/TypescriptRpcClient'
+                        split_repository: 'typescript-rpc-client'
+                    -
+                        local_path: 'src/TypescriptCodegen'
+                        split_repository: 'typescript-codegen'
 
         steps:
             - uses: actions/checkout@v4
