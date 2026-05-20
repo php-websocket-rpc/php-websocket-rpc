@@ -38,7 +38,7 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "commander": "^13",
+        "commander": "^14",
         "glob": "^11",
         "php-parser": "^3.6"
     }
