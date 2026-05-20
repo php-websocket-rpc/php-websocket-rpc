@@ -51,7 +51,7 @@ export class PendingRequestStore {
      * Reject all pending requests.
      */
     rejectAll(reason: unknown): void {
-        for (const [id, entry] of this.map) {
+        for (const [, entry] of this.map) {
             clearTimeout(entry.timer);
             entry.reject(reason);
         }

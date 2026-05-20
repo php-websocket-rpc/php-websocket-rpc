@@ -15,7 +15,7 @@ import type { AttributeInfo } from './attribute-resolver.js';
 export function detectPattern(
     attributes: AttributeInfo[],
     returnType: string | null,
-    hasCallableParam: boolean,
+    _hasCallableParam: boolean,
 ): {
     pattern: ServiceMethod['pattern'];
     channel: string | null;

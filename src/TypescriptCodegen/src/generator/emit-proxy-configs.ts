@@ -1,4 +1,4 @@
-import type { ServiceContract, ServiceMethod } from '../types.js';
+import type { ServiceContract } from '../types.js';
 
 /**
  * Generate ProxyOptions config exports for all services.

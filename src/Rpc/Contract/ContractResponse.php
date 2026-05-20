@@ -14,8 +14,7 @@ use PhpWebsocketRpc\Rpc\Payload\Payload;
  */
 final class ContractResponse extends Payload implements Kind\RpcResponse
 {
-    public function __construct(
-        /** The return value of the method call (may be serialized). */
+    public function __construct(/** The return value of the method call (may be serialized). */
         public readonly mixed $result = null,
     ) {
         parent::__construct();

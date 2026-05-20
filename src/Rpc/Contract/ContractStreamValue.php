@@ -23,8 +23,7 @@ final class ContractStreamValue extends Payload implements Kind\StreamData
      */
     public string $channelName = '';
 
-    public function __construct(
-        /** The yielded/pushed value (scalar, array, or serialized object). */
+    public function __construct(/** The yielded/pushed value (scalar, array, or serialized object). */
         public readonly mixed $value = null,
     ) {
         parent::__construct();
@@ -48,9 +47,7 @@ final class ContractStreamValue extends Payload implements Kind\StreamData
      */
     public static function fromArray(array $data): static
     {
-        $instance = new self(
-            value: $data['value'] ?? null,
-        );
+        $instance = new self(value: $data['value'] ?? null);
 
         if (isset($data['id'])) {
             $instance->initWithId($data['id']);

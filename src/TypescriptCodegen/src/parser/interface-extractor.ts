@@ -2,11 +2,9 @@ import type {
     Program,
     Namespace,
     Interface,
-    Declaration,
     Method,
     Parameter,
     Identifier,
-    AttrGroup,
 } from 'php-parser';
 import type { ServiceContract, ServiceMethod, ParamDecl } from '../types.js';
 import { resolveAttributes } from './attribute-resolver.js';
@@ -115,7 +113,7 @@ function extractInterface(
  */
 function extractMethod(
     method: Method,
-    inheritedAttrs: any[],  // interface-level attributes (unused currently)
+    _inheritedAttrs: any[],  // interface-level attributes (unused currently)
 ): ServiceMethod | null {
     const name = resolveNodeName(method.name);
     if (!name) return null;

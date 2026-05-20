@@ -4,6 +4,15 @@
     "description": "Generates typed TypeScript interfaces and proxy configs from PHP RPC contract interfaces",
     "license": "MIT",
     "author": "Prasetyo Wicaksono <pras@tuta.io>",
+    "keywords": ["rpc", "codegen", "php", "typescript", "code-generation", "attributes"],
+    "homepage": "https://github.com/php-websocket-rpc/typescript-codegen",
+    "bugs": {
+        "url": "https://github.com/php-websocket-rpc/php-websocket-rpc/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/php-websocket-rpc/typescript-codegen.git"
+    },
     "type": "module",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",

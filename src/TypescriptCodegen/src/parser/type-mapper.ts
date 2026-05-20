@@ -1,5 +1,4 @@
 import type { Identifier } from 'php-parser';
-import type { ParamDecl } from '../types.js';
 
 /**
  * Map a PHP type AST node (Identifier or Identifier[] for union types)

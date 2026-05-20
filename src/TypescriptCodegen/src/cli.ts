@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
+import { writeFileSync, existsSync, statSync } from 'node:fs';
 import { globSync } from 'glob';
 import { parsePhpFile } from './parser/parse-file.js';
 import { emitInterfaces } from './generator/emit-ts-interfaces.js';

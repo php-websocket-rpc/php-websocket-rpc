@@ -109,9 +109,24 @@ final class ContractSerializer
         }
 
         // If expectedType is a built-in, return as-is (unlikely but safe)
-        if ($expectedType !== null && \in_array(\strtolower($expectedType), [
-            'int', 'float', 'string', 'bool', 'array', 'null', 'mixed', 'void', 'never',
-        ], true)) {
+        if (
+            $expectedType !== null
+            && \in_array(
+                \strtolower($expectedType),
+                [
+                    'int',
+                    'float',
+                    'string',
+                    'bool',
+                    'array',
+                    'null',
+                    'mixed',
+                    'void',
+                    'never',
+                ],
+                true,
+            )
+        ) {
             return $data;
         }
 
@@ -133,8 +148,11 @@ final class ContractSerializer
     /**
      * Reconstruct an object by calling its constructor with mapped parameters.
      */
-    private static function hydrateViaConstructor(\ReflectionClass $ref, \ReflectionMethod $constructor, array $props): object
-    {
+    private static function hydrateViaConstructor(
+        \ReflectionClass $ref,
+        \ReflectionMethod $constructor,
+        array $props,
+    ): object {
         $params = [];
 
         foreach ($constructor->getParameters() as $param) {

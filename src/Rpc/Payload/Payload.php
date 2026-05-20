@@ -76,9 +76,7 @@ abstract class Payload
         $constructor = $ref->getConstructor();
 
         if ($constructor === null) {
-            throw new \RuntimeException(
-                \sprintf('Payload class %s must have a constructor', $class)
-            );
+            throw new \RuntimeException(\sprintf('Payload class %s must have a constructor', $class));
         }
 
         $params = [];
@@ -89,9 +87,11 @@ abstract class Payload
                 if ($param->isDefaultValueAvailable()) {
                     $params[] = $param->getDefaultValue();
                 } else {
-                    throw new \RuntimeException(
-                        \sprintf('Missing required constructor parameter "$%s" for %s', $name, $class)
-                    );
+                    throw new \RuntimeException(\sprintf(
+                        'Missing required constructor parameter "$%s" for %s',
+                        $name,
+                        $class,
+                    ));
                 }
             } else {
                 $params[] = self::decodeValue($data[$name], $param->getType());

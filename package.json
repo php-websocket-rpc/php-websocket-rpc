@@ -3,6 +3,14 @@
     "private": true,
     "license": "MIT",
     "author": "Prasetyo Wicaksono <pras@tuta.io>",
+    "homepage": "https://github.com/php-websocket-rpc/php-websocket-rpc",
+    "bugs": {
+        "url": "https://github.com/php-websocket-rpc/php-websocket-rpc/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/php-websocket-rpc/php-websocket-rpc.git"
+    },
     "workspaces": [
         "src/TypescriptRpcClient",
         "src/TypescriptCodegen"
@@ -12,10 +20,14 @@
         "test": "vitest run --passWithNoTests",
         "test:watch": "vitest",
         "typecheck": "tsc -p src/TypescriptRpcClient/tsconfig.json --noEmit && tsc -p src/TypescriptCodegen/tsconfig.json --noEmit",
+        "lint": "oxlint src/TypescriptRpcClient/src src/TypescriptCodegen/src --deny-warnings",
+        "format": "oxlint --fix src/TypescriptRpcClient/src src/TypescriptCodegen/src",
+        "format:check": "oxlint src/TypescriptRpcClient/src src/TypescriptCodegen/src",
         "sync:versions": "node scripts/sync-versions.mjs"
     },
     "devDependencies": {
         "@types/node": "^22",
+        "oxlint": "^1.66.0",
         "typescript": "^5",
         "vitest": "^3"
     }

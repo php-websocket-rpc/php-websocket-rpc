@@ -4,6 +4,15 @@
     "description": "TypeScript/JavaScript RPC client for php-websocket-rpc — works in browser and Node.js",
     "license": "MIT",
     "author": "Prasetyo Wicaksono <pras@tuta.io>",
+    "keywords": ["rpc", "websocket", "msgpack", "typescript", "async", "browser", "proxy"],
+    "homepage": "https://github.com/php-websocket-rpc/typescript-rpc-client",
+    "bugs": {
+        "url": "https://github.com/php-websocket-rpc/php-websocket-rpc/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/php-websocket-rpc/typescript-rpc-client.git"
+    },
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.mjs",

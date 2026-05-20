@@ -1,5 +1,4 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { ProxyOptions } from './types';
 import type { RpcClient } from './rpc-client';
 import { createContractProxy } from './contract-proxy';
 

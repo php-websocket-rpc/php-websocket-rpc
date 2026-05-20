@@ -40,6 +40,9 @@ jobs:
             - name: Install PHP dependencies
               run: composer install --prefer-dist --no-progress
 
+            - name: Run PHP linter
+              run: vendor/bin/mago lint src/
+
             - name: Run PHPUnit tests
               run: vendor/bin/phpunit --no-coverage
 
@@ -63,6 +66,9 @@ jobs:
 
             - name: Install npm dependencies
               run: npm ci
+
+            - name: Run TypeScript linter
+              run: npx oxlint src/TypescriptRpcClient/src src/TypescriptCodegen/src --deny-warnings
 
             - name: Build all packages
               run: npm run build

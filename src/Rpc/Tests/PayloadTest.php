@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace PhpWebsocketRpc\Rpc\Tests\Payload;
 
 use PHPUnit\Framework\TestCase;
-use PhpWebsocketRpc\Rpc\Payload\Payload;
-use PhpWebsocketRpc\Rpc\Payload\Kind;
 use PhpWebsocketRpc\Rpc\Payload\Error;
+use PhpWebsocketRpc\Rpc\Payload\Kind;
+use PhpWebsocketRpc\Rpc\Payload\Payload;
 use PhpWebsocketRpc\Rpc\Payload\RpcResponse;
 use PhpWebsocketRpc\Rpc\Serialization\Serializer;
 
@@ -105,6 +105,7 @@ class PayloadTest extends TestCase
             ) {
                 parent::__construct();
             }
+
             public static function responseClass(): string
             {
                 return self::class;

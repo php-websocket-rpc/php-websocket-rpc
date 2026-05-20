@@ -50,12 +50,6 @@ export interface PendingEntry {
 /**
  * Connection options for Node.js (mTLS).
  */
-/**
- * Node.js Buffer type reference (avoids @types/node dependency).
- * In browser contexts, these options are unused.
- */
-declare var Buffer: any;
-
 export interface ConnectionOptions {
     /** TLS client key (Node.js mTLS) */
     key?: string | any;

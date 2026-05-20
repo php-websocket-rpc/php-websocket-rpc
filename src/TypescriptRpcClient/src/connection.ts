@@ -56,7 +56,7 @@ export class Connection {
                 resolve();
             };
 
-            ws.onerror = (err) => {
+            ws.onerror = (_err) => {
                 reject(new Error(`WebSocket connection failed: ${uri}`));
             };
 

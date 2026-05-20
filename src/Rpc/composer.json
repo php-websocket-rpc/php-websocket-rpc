@@ -9,6 +9,11 @@
             "email": "pras@tuta.io"
         }
     ],
+    "keywords": ["rpc", "websocket", "amphp", "async", "msgpack", "serialization", "middleware"],
+    "homepage": "https://github.com/php-websocket-rpc/rpc",
+    "support": {
+        "issues": "https://github.com/php-websocket-rpc/php-websocket-rpc/issues"
+    },
     "require": {
         "php": ">=8.5",
         "ext-msgpack": "*"

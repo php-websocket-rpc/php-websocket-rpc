@@ -26,13 +26,13 @@ namespace PhpWebsocketRpc\Rpc\Payload;
  */
 final class Error
 {
-    public const PARSE_ERROR      = -32700;
-    public const INVALID_REQUEST  = -32600;
+    public const PARSE_ERROR = -32700;
+    public const INVALID_REQUEST = -32600;
     public const METHOD_NOT_FOUND = -32601;
-    public const INVALID_PARAMS   = -32602;
-    public const INTERNAL_ERROR   = -32603;
-    public const TIMEOUT          = -32000;
-    public const STREAM_CLOSED    = -32001;
+    public const INVALID_PARAMS = -32602;
+    public const INTERNAL_ERROR = -32603;
+    public const TIMEOUT = -32000;
+    public const STREAM_CLOSED = -32001;
     public const TOO_MANY_REQUESTS = -32005;
 
     public function __construct(
@@ -54,11 +54,6 @@ final class Error
 
     public static function fromArray(array $data): self
     {
-        return new self(
-            $data[0],
-            $data[1],
-            $data[2] ?? null,
-            $data[3] ?? null, // exceptionClass (optional, added in v2)
-        );
+        return new self($data[0], $data[1], $data[2] ?? null, $data[3] ?? null); // exceptionClass (optional, added in v2)
     }
 }

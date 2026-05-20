@@ -30,7 +30,8 @@
     "require-dev": {
         "amphp/log": "^2",
         "monorepo-php/monorepo": "^12.7",
-        "phpunit/phpunit": "^11"
+        "phpunit/phpunit": "^11",
+        "carthage-software/mago": "^1.28"
     },
     "autoload-dev": {
         "psr-4": {
@@ -43,5 +44,10 @@
         "php-websocket-rpc/rpc": "self.version",
         "php-websocket-rpc/rpc-client": "self.version",
         "php-websocket-rpc/rpc-server": "self.version"
+    },
+    "scripts": {
+        "lint": "vendor/bin/mago lint src/",
+        "format": "vendor/bin/mago format src/",
+        "format:check": "vendor/bin/mago format --check src/"
     }
 }
