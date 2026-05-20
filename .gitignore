@@ -21,7 +21,7 @@ composer.lock
 .phpunit.result.cache
 
 # Node
-package-lock.json
+# package-lock.json committed for reproducible CI builds
 
 # Self-signed certs for WSS examples — generate your own
 /examples/certs/

@@ -2,6 +2,13 @@
     "name": "php-websocket-rpc/rpc",
     "description": "Shared data model, serialization, and middleware pipeline for RPC over WebSocket",
     "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Prasetyo Wicaksono",
+            "email": "pras@tuta.io"
+        }
+    ],
     "require": {
         "php": ">=8.5",
         "ext-msgpack": "*"

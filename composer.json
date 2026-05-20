@@ -2,6 +2,13 @@
     "name": "php-websocket-rpc/php-websocket-rpc",
     "description": "Monorepo for PHP RPC over WebSocket — packages: rpc, rpc-client, rpc-server",
     "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Prasetyo Wicaksono",
+            "email": "pras@tuta.io"
+        }
+    ],
     "require": {
         "amphp/amp": "^3",
         "amphp/http-server": "^3",

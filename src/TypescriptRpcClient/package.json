@@ -3,6 +3,7 @@
     "version": "0.1.0",
     "description": "TypeScript/JavaScript RPC client for php-websocket-rpc — works in browser and Node.js",
     "license": "MIT",
+    "author": "Prasetyo Wicaksono <pras@tuta.io>",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.mjs",

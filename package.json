@@ -1,6 +1,8 @@
 {
     "name": "php-websocket-rpc",
     "private": true,
+    "license": "MIT",
+    "author": "Prasetyo Wicaksono <pras@tuta.io>",
     "workspaces": [
         "src/TypescriptRpcClient",
         "src/TypescriptCodegen"
