@@ -2,6 +2,7 @@ import type { ConnectionOptions, ProxyOptions } from './types';
 import { Connection } from './connection';
 import { PendingRequestStore } from './pending-requests';
 import { Subscription } from './subscription';
+import { RpcError, RpcErrorCode } from './types';
 import { encode } from './serializer';
 import {
     FQCN,
@@ -203,9 +204,10 @@ export class RpcClient {
         if (props['payload'] !== undefined || props['error'] !== undefined) {
             if (props['error']) {
                 const err = props['error'] as Record<string, unknown>;
-                if (id) this.pending.reject(id, new Error(
-                    (err['message'] as string) || 'RPC error',
-                ));
+                const code = (err['code'] as number) ?? RpcErrorCode.INTERNAL_ERROR;
+                const message = (err['message'] as string) || 'RPC error';
+                const data = err['data'];
+                if (id) this.pending.reject(id, new RpcError(code, message, data));
             } else if (props['payload']) {
                 const payload = props['payload'] as [string, Record<string, unknown>];
                 // If payload is a ContractResponse, unwrap the result field

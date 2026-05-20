@@ -50,7 +50,7 @@ final class ContractPublish extends Payload implements Kind\StreamData
             channelName: $data['channelName'] ?? '',
         );
 
-        if (isset($data['id'])) {
+        if (\array_key_exists('id', $data)) {
             $instance->initWithId($data['id']);
         }
 

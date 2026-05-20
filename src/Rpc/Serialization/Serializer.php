@@ -60,7 +60,7 @@ final class Serializer
 
         // Decode nested payload (if present)
         $payload = null;
-        if (isset($props['payload']) && \is_array($props['payload'])) {
+        if (\array_key_exists('payload', $props) && \is_array($props['payload'])) {
             [$pClass, $pProps] = $props['payload'];
             if (\is_subclass_of($pClass, Payload::class)) {
                 $payload = $pClass::fromArray($pProps);
@@ -69,7 +69,7 @@ final class Serializer
 
         // Decode nested error (if present)
         $error = null;
-        if (isset($props['error']) && \is_array($props['error'])) {
+        if (\array_key_exists('error', $props) && \is_array($props['error'])) {
             $error = Error::fromArray($props['error']);
         }
 

@@ -75,12 +75,12 @@ final class ContractStreamInvocation extends Payload implements Kind\StreamOpen,
             params: $data['params'] ?? [],
         );
 
-        if (isset($data['id'])) {
+        if (\array_key_exists('id', $data)) {
             $instance->initWithId($data['id']);
         }
 
         // Preserve the client-generated channel name for routing
-        if (isset($data['channelName'])) {
+        if (\array_key_exists('channelName', $data)) {
             $instance->channelName = $data['channelName'];
         }
 

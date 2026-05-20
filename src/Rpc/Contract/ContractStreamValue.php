@@ -49,11 +49,11 @@ final class ContractStreamValue extends Payload implements Kind\StreamData
     {
         $instance = new self(value: $data['value'] ?? null);
 
-        if (isset($data['id'])) {
+        if (\array_key_exists('id', $data)) {
             $instance->initWithId($data['id']);
         }
 
-        if (isset($data['channelName'])) {
+        if (\array_key_exists('channelName', $data)) {
             $instance->channelName = $data['channelName'];
         }
 

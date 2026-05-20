@@ -45,13 +45,13 @@ class PayloadTest extends TestCase
         $error = new Error(Error::METHOD_NOT_FOUND, 'Not found');
         $response = new RpcResponse('test-id-2', null, $error);
         $this->assertFalse($response->isSuccess());
-        $this->assertSame(-32601, $response->getError()->code);
+        $this->assertSame(-32_601, $response->getError()->code);
     }
 
     public function testErrorSerialization(): void
     {
         $serializer = new Serializer();
-        $error = new Error(-32000, 'timeout', ['key' => 'val']);
+        $error = new Error(-32_000, 'timeout', ['key' => 'val']);
         $response = new RpcResponse('id-3', null, $error);
 
         $packed = $serializer->encode($response);
@@ -59,7 +59,7 @@ class PayloadTest extends TestCase
 
         $this->assertInstanceOf(RpcResponse::class, $decoded);
         $this->assertFalse($decoded->isSuccess());
-        $this->assertSame(-32000, $decoded->getError()->code);
+        $this->assertSame(-32_000, $decoded->getError()->code);
         $this->assertSame('timeout', $decoded->getError()->message);
         $this->assertSame(['key' => 'val'], $decoded->getError()->data);
         $this->assertNull($decoded->getError()->exceptionClass);
@@ -68,14 +68,14 @@ class PayloadTest extends TestCase
     public function testErrorWithExceptionClass(): void
     {
         $serializer = new Serializer();
-        $error = new Error(-32001, 'Insufficient funds', ['balance' => 10], 'Domain\\InsufficientFunds');
+        $error = new Error(-32_001, 'Insufficient funds', ['balance' => 10], 'Domain\\InsufficientFunds');
         $response = new RpcResponse('id-4', null, $error);
 
         $packed = $serializer->encode($response);
         $decoded = $serializer->decode($packed);
 
         $this->assertFalse($decoded->isSuccess());
-        $this->assertSame(-32001, $decoded->getError()->code);
+        $this->assertSame(-32_001, $decoded->getError()->code);
         $this->assertSame('Insufficient funds', $decoded->getError()->message);
         $this->assertSame(['balance' => 10], $decoded->getError()->data);
         $this->assertSame('Domain\\InsufficientFunds', $decoded->getError()->exceptionClass);
@@ -85,13 +85,13 @@ class PayloadTest extends TestCase
     {
         // Old format (3 elements) must still decode correctly
         $serializer = new Serializer();
-        $error = new Error(-32602, 'Bad params', ['field' => 'amount']);
+        $error = new Error(-32_602, 'Bad params', ['field' => 'amount']);
         $response = new RpcResponse('id-5', null, $error);
 
         $packed = $serializer->encode($response);
         $decoded = $serializer->decode($packed);
 
-        $this->assertSame(-32602, $decoded->getError()->code);
+        $this->assertSame(-32_602, $decoded->getError()->code);
         $this->assertSame('Bad params', $decoded->getError()->message);
         $this->assertSame(['field' => 'amount'], $decoded->getError()->data);
         $this->assertNull($decoded->getError()->exceptionClass);

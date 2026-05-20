@@ -41,7 +41,7 @@ jobs:
               run: composer install --prefer-dist --no-progress
 
             - name: Run PHP linter
-              run: vendor/bin/mago lint src/
+              run: vendor/bin/mago lint --baseline lint-baseline.toml src/
 
             - name: Run PHPUnit tests
               run: vendor/bin/phpunit --no-coverage

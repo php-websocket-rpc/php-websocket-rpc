@@ -60,6 +60,79 @@ chat.onMessage((msg: string) => console.log(msg));
 chat.send('Hello!');
 ```
 
+## Authentication
+
+### Authenticating
+
+Use the built-in `AuthService` contract:
+
+```typescript
+const auth = client.createProxy({ service: 'AuthService' });
+const user = await auth.authenticate('your-token-here');
+// user = { id: 'alice', roles: ['customer'] }
+```
+
+### Handling Auth Errors
+
+The client throws typed `RpcError` instances with the server-side error code:
+
+```typescript
+import { RpcError, RpcErrorCode } from '@php-websocket-rpc/client';
+
+try {
+    const user = await auth.authenticate('invalid-token');
+} catch (e) {
+    if (e instanceof RpcError) {
+        if (e.code === RpcErrorCode.AUTHENTICATION_FAILED) {
+            // Show login form
+        } else if (e.code === RpcErrorCode.AUTHORIZATION_FAILED) {
+            // Show forbidden message
+        }
+    }
+}
+
+// Quick check:
+if (e instanceof RpcError && e.isAuthError) {
+    // Any authentication or authorization error
+}
+```
+
+### Logout
+
+```typescript
+await auth.logout();  // clears auth state
+```
+
+## Error Handling
+
+The `RpcError` class includes code, message, and optional data:
+
+```typescript
+try {
+    await client.call('MyService', 'myMethod', []);
+} catch (e) {
+    if (e instanceof RpcError) {
+        console.log(e.code);      // e.g. -32601 (method not found)
+        console.log(e.message);   // human-readable error
+        console.log(e.data);      // optional error data
+
+        // Boolean helper
+        console.log(e.isAuthError);
+    }
+}
+```
+
+Error code constants:
+
+| Constant | Code | Description |
+|----------|------|-------------|
+| `RpcErrorCode.AUTHENTICATION_FAILED` | -32010 | Invalid/expired/missing token |
+| `RpcErrorCode.AUTHORIZATION_FAILED` | -32011 | Insufficient permissions |
+| `RpcErrorCode.METHOD_NOT_FOUND` | -32601 | Method does not exist |
+| `RpcErrorCode.INVALID_PARAMS` | -32602 | Invalid parameters |
+| `RpcErrorCode.INTERNAL_ERROR` | -32603 | Internal server error |
+| `RpcErrorCode.TIMEOUT` | -32000 | Request timed out |
+
 ## Browser Usage
 
 Load the IIFE bundle directly:

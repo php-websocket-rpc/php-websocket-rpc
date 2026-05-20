@@ -38,7 +38,7 @@ final class MiddlewarePipeline
      */
     private function build(int $index, callable $terminal): callable
     {
-        if (!isset($this->middlewares[$index])) {
+        if (!\array_key_exists($index, $this->middlewares)) {
             return static function (mixed $payload, mixed ...$args) use ($terminal): mixed {
                 return $terminal($payload, ...$args);
             };

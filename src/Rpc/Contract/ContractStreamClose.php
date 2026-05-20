@@ -48,11 +48,11 @@ final class ContractStreamClose extends Payload implements Kind\StreamClose
     {
         $instance = new self();
 
-        if (isset($data['id'])) {
+        if (\array_key_exists('id', $data)) {
             $instance->initWithId($data['id']);
         }
 
-        if (isset($data['channelName'])) {
+        if (\array_key_exists('channelName', $data)) {
             $instance->channelName = $data['channelName'];
         }
 

@@ -26,14 +26,14 @@ namespace PhpWebsocketRpc\Rpc\Payload;
  */
 final class Error
 {
-    public const PARSE_ERROR = -32700;
-    public const INVALID_REQUEST = -32600;
-    public const METHOD_NOT_FOUND = -32601;
-    public const INVALID_PARAMS = -32602;
-    public const INTERNAL_ERROR = -32603;
-    public const TIMEOUT = -32000;
-    public const STREAM_CLOSED = -32001;
-    public const TOO_MANY_REQUESTS = -32005;
+    public const PARSE_ERROR = -32_700;
+    public const INVALID_REQUEST = -32_600;
+    public const METHOD_NOT_FOUND = -32_601;
+    public const INVALID_PARAMS = -32_602;
+    public const INTERNAL_ERROR = -32_603;
+    public const TIMEOUT = -32_000;
+    public const STREAM_CLOSED = -32_001;
+    public const TOO_MANY_REQUESTS = -32_005;
 
     public function __construct(
         public readonly int $code,

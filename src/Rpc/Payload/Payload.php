@@ -102,7 +102,7 @@ abstract class Payload
         $instance = $ref->newInstance(...$params);
 
         // If the ID was passed but not as a constructor param, set it via initWithId
-        if (isset($data['id']) && $instance->id !== $data['id']) {
+        if (\array_key_exists('id', $data) && $instance->id !== $data['id']) {
             $instance->initWithId($data['id']);
         }
 
@@ -111,7 +111,7 @@ abstract class Payload
 
     private static function decodeValue(mixed $value, ?\ReflectionType $type): mixed
     {
-        if (\is_array($value) && \count($value) === 2 && \is_string($value[0])) {
+        if (\is_array($value) && \array_is_list($value) && \count($value) === 2 && \is_string($value[0])) {
             [$fqcn, $props] = $value;
             if (\is_subclass_of($fqcn, self::class)) {
                 return $fqcn::fromArray($props);

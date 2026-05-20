@@ -48,6 +48,52 @@ export interface PendingEntry {
 }
 
 /**
+ * Standard RPC error codes from the PHP server.
+ */
+export const RpcErrorCode = {
+    PARSE_ERROR: -32700,
+    INVALID_REQUEST: -32600,
+    METHOD_NOT_FOUND: -32601,
+    INVALID_PARAMS: -32602,
+    INTERNAL_ERROR: -32603,
+    TIMEOUT: -32000,
+    STREAM_CLOSED: -32001,
+    TOO_MANY_REQUESTS: -32005,
+    AUTHENTICATION_FAILED: -32010,
+    AUTHORIZATION_FAILED: -32011,
+} as const;
+
+/**
+ * Typed RPC error that includes the server-side error code and data.
+ *
+ * Usage:
+ *   try {
+ *       await client.call(service, method, args);
+ *   } catch (e) {
+ *       if (e instanceof RpcError && e.code === RpcErrorCode.AUTHENTICATION_FAILED) {
+ *           // Show login form
+ *       }
+ *   }
+ */
+export class RpcError extends Error {
+    constructor(
+        public readonly code: number,
+        message: string,
+        public readonly data?: unknown,
+    ) {
+        super(message);
+        this.name = 'RpcError';
+    }
+
+    get isAuthError(): boolean {
+        return (
+            this.code === RpcErrorCode.AUTHENTICATION_FAILED
+            || this.code === RpcErrorCode.AUTHORIZATION_FAILED
+        );
+    }
+}
+
+/**
  * Connection options for Node.js (mTLS).
  */
 export interface ConnectionOptions {
