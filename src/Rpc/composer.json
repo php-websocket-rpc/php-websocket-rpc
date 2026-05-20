@@ -16,7 +16,8 @@
     },
     "require": {
         "php": ">=8.5",
-        "ext-msgpack": "*"
+        "ext-msgpack": "*",
+        "amphp/websocket": "^2"
     },
     "require-dev": {
         "phpunit/phpunit": "^11"

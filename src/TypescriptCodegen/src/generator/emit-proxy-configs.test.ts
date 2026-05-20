@@ -19,7 +19,6 @@ describe('emitProxyConfigs', () => {
         const output = emitProxyConfigs([svc]);
         expect(output).toContain('export const MathServiceConfig');
         expect(output).toContain("service: 'MathService'");
-        expect(output).toContain("call: ['add', 'sub']");
         expect(output).toContain("notify: ['log']");
     });
 
@@ -72,7 +71,7 @@ describe('emitProxyConfigs', () => {
         expect(output).toContain("channel: 'chat'");
     });
 
-    it('should omit call array if no call methods', () => {
+    it('should omit non-existent pattern arrays', () => {
         const svc: ServiceContract = {
             namespace: '',
             name: 'OnlyStream',
@@ -84,10 +83,10 @@ describe('emitProxyConfigs', () => {
         };
 
         const output = emitProxyConfigs([svc]);
-        expect(output).not.toContain('call:');
         expect(output).not.toContain('notify:');
         expect(output).not.toContain('subscribe:');
         expect(output).not.toContain('publish:');
+        expect(output).toContain("stream: ['stream']");
     });
 
     it('should use satisfies ProxyOptions', () => {

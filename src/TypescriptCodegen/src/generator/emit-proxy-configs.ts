@@ -19,7 +19,6 @@ export function emitProxyConfigs(services: ServiceContract[]): string {
 function emitConfigForService(svc: ServiceContract): string {
     const configName = `${svc.name}Config`;
 
-    const callMethods: string[] = [];
     const notifyMethods: string[] = [];
     const streamMethods: string[] = [];
     const subscribeMethods: string[] = [];
@@ -28,9 +27,6 @@ function emitConfigForService(svc: ServiceContract): string {
 
     for (const method of svc.methods) {
         switch (method.pattern) {
-            case 'call':
-                callMethods.push(method.name);
-                break;
             case 'notify':
                 notifyMethods.push(method.name);
                 break;
@@ -51,10 +47,6 @@ function emitConfigForService(svc: ServiceContract): string {
     // Build the config object literal
     const props: string[] = [];
     props.push(`    service: '${svc.name}',`);
-
-    if (callMethods.length > 0) {
-        props.push(`    call: [${callMethods.map((m) => `'${m}'`).join(', ')}],`);
-    }
     if (notifyMethods.length > 0) {
         props.push(`    notify: [${notifyMethods.map((m) => `'${m}'`).join(', ')}],`);
     }

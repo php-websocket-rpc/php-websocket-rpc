@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PhpWebsocketRpc\RpcClient\Transport;
+namespace PhpWebsocketRpc\Rpc\Transport;
 
 use Amp\Websocket\WebsocketClient;
 use PhpWebsocketRpc\Rpc\Payload\Payload;
