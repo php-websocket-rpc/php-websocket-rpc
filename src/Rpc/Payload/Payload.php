@@ -40,6 +40,10 @@ abstract class Payload
 
             if ($value instanceof Payload) {
                 $data[$prop->getName()] = $value->toArray();
+            } elseif ($value instanceof \BackedEnum) {
+                $data[$prop->getName()] = $value->value;
+            } elseif ($value instanceof \UnitEnum) {
+                $data[$prop->getName()] = $value->name;
             } elseif (\is_object($value) && \method_exists($value, 'toArray')) {
                 $data[$prop->getName()] = $value->toArray();
             } elseif (\is_array($value)) {
@@ -58,6 +62,10 @@ abstract class Payload
         foreach ($array as $key => $value) {
             if ($value instanceof Payload) {
                 $result[$key] = $value->toArray();
+            } elseif ($value instanceof \BackedEnum) {
+                $result[$key] = $value->value;
+            } elseif ($value instanceof \UnitEnum) {
+                $result[$key] = $value->name;
             } elseif (\is_object($value) && \method_exists($value, 'toArray')) {
                 $result[$key] = $value->toArray();
             } elseif (\is_array($value)) {
@@ -111,6 +119,24 @@ abstract class Payload
 
     private static function decodeValue(mixed $value, ?\ReflectionType $type): mixed
     {
+        // Reconstruct enum from expected type if available
+        if ($type !== null && $type instanceof \ReflectionNamedType) {
+            $typeName = $type->getName();
+
+            if (\is_subclass_of($typeName, \BackedEnum::class)) {
+                return $typeName::from($value);
+            }
+
+            if (\is_subclass_of($typeName, \UnitEnum::class)) {
+                $const = $typeName . '::' . $value;
+                if (\defined($const)) {
+                    return \constant($const);
+                }
+                return $value;
+            }
+        }
+
+        // [FQCN, props] — recursively decode
         if (\is_array($value) && \array_is_list($value) && \count($value) === 2 && \is_string($value[0])) {
             [$fqcn, $props] = $value;
             if (\is_subclass_of($fqcn, self::class)) {

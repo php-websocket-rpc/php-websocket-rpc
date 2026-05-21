@@ -19,11 +19,28 @@ final class ContractSerializer
 {
     /**
      * Encode a value for wire transmission.
+     *
+     * - Scalars pass through as-is (msgpack native).
+     * - Backed enums (string/int) are encoded as their backing value (scalar).
+     * - Unit enums are encoded as their case name (string).
+     * - Arrays are recursively encoded.
+     * - Payload subclasses use their toArray() method.
+     * - Other objects are encoded as [FQCN, props].
      */
     public static function encode(mixed $value): mixed
     {
         if ($value === null || \is_scalar($value)) {
             return $value;
+        }
+
+        // Backed enums: send the backing value (string/int) directly
+        if ($value instanceof \BackedEnum) {
+            return $value->value;
+        }
+
+        // Unit enums: send the case name as a string
+        if ($value instanceof \UnitEnum) {
+            return $value->name;
         }
 
         if (\is_array($value)) {
@@ -50,9 +67,26 @@ final class ContractSerializer
      *
      * When $expectedType is a class-string and the decoded value is an
      * [FQCN, props] array, it is reconstructed as that type.
+     *
+     * Backed enums are reconstructed from their scalar backing value.
+     * Unit enums are reconstructed from their case name string.
      */
     public static function decode(mixed $value, ?string $expectedType = null): mixed
     {
+        // Try to reconstruct a backed enum from scalar value
+        if ($expectedType !== null && \is_subclass_of($expectedType, \BackedEnum::class)) {
+            return $expectedType::from($value);
+        }
+
+        // Try to reconstruct a unit enum from case name
+        if ($expectedType !== null && \is_subclass_of($expectedType, \UnitEnum::class)) {
+            $const = $expectedType . '::' . $value;
+            if (\defined($const)) {
+                return \constant($const);
+            }
+            return $value;
+        }
+
         if ($value === null || \is_scalar($value)) {
             return $value;
         }

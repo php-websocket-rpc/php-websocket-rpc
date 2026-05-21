@@ -62,15 +62,27 @@ chat.send('Hello!');
 
 ## Authentication
 
-### Authenticating
-
-Use the built-in `AuthService` contract:
+The client ships with built-in types for the `AuthService` contract — no codegen needed.
 
 ```typescript
-const auth = client.createProxy({ service: 'AuthService' });
+import { 
+    createContractProxy,
+    AuthServiceProxy,
+    AuthServiceConfig,
+} from '@php-websocket-rpc/client';
+
+const auth = createContractProxy<AuthServiceProxy>(client, AuthServiceConfig);
+
 const user = await auth.authenticate('your-token-here');
-// user = { id: 'alice', roles: ['customer'] }
+// user.id   → "alice"
+// user.roles → ["customer"]
+
+auth.logout();
 ```
+
+`AuthServiceConfig` is pre-configured with the correct PHP FQCN and method patterns:
+- `authenticate` → **call** pattern (returns `Promise<AuthUser>`)
+- `logout` → **notify** pattern (fire-and-forget, returns `void`)
 
 ### Handling Auth Errors
 
@@ -100,7 +112,7 @@ if (e instanceof RpcError && e.isAuthError) {
 ### Logout
 
 ```typescript
-await auth.logout();  // clears auth state
+auth.logout();  // clears auth state, fire-and-forget
 ```
 
 ## Error Handling
@@ -217,3 +229,6 @@ Outputs three formats:
 | `client.subscribe(service, method, params)` | Subscribe to a stream (returns AsyncIterable) |
 | `client.publish(service, method, data, channel)` | Publish data to a channel |
 | `client.close()` | Close the connection |
+| `AuthServiceConfig` | Pre-built ProxyOptions for the built-in AuthService |
+| `AuthServiceProxy` | Typed proxy interface for AuthService |
+| `AuthUser` | User value object type (`{ id: string, roles: string[] }`) |
