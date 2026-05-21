@@ -2,8 +2,6 @@ import type {
     Program,
     Namespace,
     Identifier,
-    Enum,
-    EnumCase,
 } from 'php-parser';
 import type { ClassDecl, PropertyDecl } from '../types.js';
 

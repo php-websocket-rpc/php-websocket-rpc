@@ -97,7 +97,7 @@ describe('parsePhpFile', () => {
 
     it('should handle a file with no contracts gracefully', () => {
         const path = resolve(repoRoot(), 'examples', 'server.php');
-        const { contracts, enums, classes } = parsePhpFile(path);
+        const { contracts, enums } = parsePhpFile(path);
         // server.php has no interfaces/enums but has domain exception classes
         expect(contracts).toHaveLength(0);
         expect(enums).toHaveLength(0);
@@ -150,7 +150,7 @@ describe('parsePhpFile', () => {
     describe('enum support', () => {
         it('should extract enums from a PHP file', () => {
             const path = resolve(fixturesDir(), 'enum-contract.php');
-            const { contracts, enums } = parsePhpFile(path);
+            const { enums } = parsePhpFile(path);
 
             expect(enums).toHaveLength(3);
 
