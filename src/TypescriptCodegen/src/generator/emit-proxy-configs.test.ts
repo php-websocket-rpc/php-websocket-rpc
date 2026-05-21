@@ -3,7 +3,7 @@ import { emitProxyConfigs } from './emit-proxy-configs';
 import type { ServiceContract } from '../types';
 
 describe('emitProxyConfigs', () => {
-    it('should emit a call/notify config', () => {
+    it('should emit a call/notify config with call array', () => {
         const svc: ServiceContract = {
             namespace: '',
             name: 'MathService',
@@ -19,6 +19,7 @@ describe('emitProxyConfigs', () => {
         const output = emitProxyConfigs([svc]);
         expect(output).toContain('export const MathServiceConfig');
         expect(output).toContain("service: 'MathService'");
+        expect(output).toContain("call: ['add', 'sub']");
         expect(output).toContain("notify: ['log']");
     });
 
@@ -83,6 +84,7 @@ describe('emitProxyConfigs', () => {
         };
 
         const output = emitProxyConfigs([svc]);
+        expect(output).not.toContain('call:');
         expect(output).not.toContain('notify:');
         expect(output).not.toContain('subscribe:');
         expect(output).not.toContain('publish:');

@@ -5,6 +5,9 @@ export interface ProxyOptions {
     /** Server-side service interface name (FQCN), e.g. "MathService" */
     service: string;
 
+    /** Methods with call/response pattern (default if not listed elsewhere) */
+    call?: string[];
+
     /** Methods returning AsyncIterable (stream pattern) */
     stream?: string[];
 

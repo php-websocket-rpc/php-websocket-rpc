@@ -96,4 +96,40 @@ describe('mapSubscribeType', () => {
         expect(mapSubscribeType('object')).toBe('unknown');
         expect(mapSubscribeType('mixed')).toBe('unknown');
     });
+
+    it('should return enum name for known enum type', () => {
+        const enumNames = new Set(['Status']);
+        expect(mapSubscribeType('Status', enumNames)).toBe('Status');
+    });
+});
+
+describe('enum-aware type mapping', () => {
+    const id = (name: string) => ({ name, kind: 'identifier' } as any);
+
+    it('should map enum type to the enum name when in enumNames set', () => {
+        const enumNames = new Set(['Status']);
+        expect(mapPhpTypeToTs(id('Status'), false, enumNames)).toBe('Status');
+    });
+
+    it('should map to Record<string, unknown> when enum name not in set', () => {
+        expect(mapPhpTypeToTs(id('Status'), false)).toBe('Record<string, unknown>');
+        expect(mapPhpTypeToTs(id('Status'), false, new Set())).toBe('Record<string, unknown>');
+    });
+
+    it('should map multiple enum types in union', () => {
+        const union = [id('Active'), id('Inactive')];
+        const enumNames = new Set(['Active', 'Inactive']);
+        expect(mapPhpTypeToTs(union, false, enumNames)).toBe('Active | Inactive');
+    });
+
+    it('should handle nullable enum type', () => {
+        const enumNames = new Set(['Status']);
+        expect(mapPhpTypeToTs(id('Status'), true, enumNames)).toBe('Status | null');
+    });
+
+    it('should still map scalar types correctly with enumNames present', () => {
+        const enumNames = new Set(['Status']);
+        expect(mapPhpTypeToTs(id('string'), false, enumNames)).toBe('string');
+        expect(mapPhpTypeToTs(id('int'), true, enumNames)).toBe('number | null');
+    });
 });

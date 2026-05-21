@@ -1,14 +1,97 @@
-import type { ServiceContract, ServiceMethod, ParamDecl } from '../types.js';
+import type { ServiceContract, ServiceMethod, ParamDecl, EnumDecl, ClassDecl } from '../types.js';
 import { mapPhpTypeToTs, mapSubscribeType } from '../parser/type-mapper.js';
+
+/**
+ * Generate TypeScript enum type definitions from parsed PHP enums.
+ *
+ * String-backed enums → union of string literals (e.g., type Status = 'active' | 'inactive')
+ * Int-backed enums    → union of number literals (e.g., type Priority = 1 | 2 | 3)
+ * Unit enums          → union of case name literals (e.g., type Unit = 'Active' | 'Inactive')
+ */
+export function emitEnumTypes(enums: EnumDecl[]): string {
+    if (enums.length === 0) return '';
+
+    const blocks: string[] = [];
+
+    for (const e of enums) {
+        if (e.backingType === 'string') {
+            const values = e.cases.map((c) => `'${c.value}'`).join(' | ');
+            blocks.push(`export type ${e.name} = ${values};`);
+        } else if (e.backingType === 'int') {
+            const values = e.cases.map((c) => `${c.value}`).join(' | ');
+            blocks.push(`export type ${e.name} = ${values};`);
+        } else {
+            // Unit enum — use case names as string literals
+            const values = e.cases.map((c) => `'${c.name}'`).join(' | ');
+            blocks.push(`export type ${e.name} = ${values};`);
+        }
+    }
+
+    return blocks.join('\n') + '\n';
+}
+
+// ─── Class DTO Interfaces ────────────────────────────────────────
+
+/**
+ * Generate TypeScript interfaces for PHP class DTOs.
+ */
+export function emitClassInterfaces(
+    classes: ClassDecl[],
+    typeNames?: Set<string>,
+): string {
+    if (classes.length === 0) return '';
+
+    const blocks: string[] = [];
+
+    for (const cls of classes) {
+        blocks.push(emitClassInterface(cls, typeNames));
+    }
+
+    return blocks.join('\n');
+}
+
+/**
+ * Generate a single TypeScript interface for a PHP DTO class.
+ */
+function emitClassInterface(
+    cls: ClassDecl,
+    typeNames?: Set<string>,
+): string {
+    if (cls.properties.length === 0) return '';
+
+    const lines: string[] = [];
+    lines.push(`// ───── ${cls.fqcn.replace(/\\/g, '\\\\')} ─────`);
+    lines.push(`export interface ${cls.name} {`);
+
+    for (const prop of cls.properties) {
+        const tsType = prop.type
+            ? mapPhpTypeToTs(
+                { name: prop.type } as any,
+                prop.nullable,
+                typeNames,
+            )
+            : 'unknown';
+        const optional = prop.nullable || prop.hasDefault ? '?' : '';
+        lines.push(`    ${prop.name}${optional}: ${tsType};`);
+    }
+
+    lines.push('}');
+    return lines.join('\n') + '\n';
+}
+
+// ─── Contract Interfaces ─────────────────────────────────────────
 
 /**
  * Generate TypeScript interface code for all services.
  */
-export function emitInterfaces(services: ServiceContract[]): string {
+export function emitInterfaces(
+    services: ServiceContract[],
+    typeNames?: Set<string>,
+): string {
     const blocks: string[] = [];
 
     for (const svc of services) {
-        blocks.push(emitInterfaceForService(svc));
+        blocks.push(emitInterfaceForService(svc, typeNames));
     }
 
     return blocks.join('\n');
@@ -17,15 +100,18 @@ export function emitInterfaces(services: ServiceContract[]): string {
 /**
  * Generate a single TypeScript interface for a service.
  */
-function emitInterfaceForService(svc: ServiceContract): string {
+function emitInterfaceForService(
+    svc: ServiceContract,
+    typeNames?: Set<string>,
+): string {
     const interfaceName = `${svc.name}Proxy`;
     const lines: string[] = [];
 
-    lines.push(`// ───── ${svc.fqcn} ─────`);
+    lines.push(`// ───── ${svc.fqcn.replace(/\\/g, '\\\\')} ─────`);
     lines.push(`export interface ${interfaceName} {`);
 
     for (const method of svc.methods) {
-        const sig = emitMethodSignature(method);
+        const sig = emitMethodSignature(method, typeNames);
         lines.push(`    ${sig}`);
     }
 
@@ -37,8 +123,11 @@ function emitInterfaceForService(svc: ServiceContract): string {
 /**
  * Emit a single method signature within the interface.
  */
-function emitMethodSignature(method: ServiceMethod): string {
-    const params = method.params.map((p) => emitParam(p)).join(', ');
+function emitMethodSignature(
+    method: ServiceMethod,
+    typeNames?: Set<string>,
+): string {
+    const params = method.params.map((p) => emitParam(p, typeNames)).join(', ');
 
     let returnType: string;
 
@@ -47,28 +136,25 @@ function emitMethodSignature(method: ServiceMethod): string {
             returnType = `Promise<${mapPhpTypeToTs(
                 method.returnType ? { name: method.returnType } as any : null,
                 method.returnNullable,
+                typeNames,
             )}>`;
             break;
 
         case 'stream': {
-            // Stream return type is Iterator<T> in PHP
-            // Figure out the yielded type from the return type or first param
-            const streamType = inferStreamType(method);
+            const streamType = inferStreamType(method, typeNames);
             returnType = `AsyncIterable<${streamType}>`;
             break;
         }
 
         case 'subscribe': {
-            // Subscribe: last param is callback, return void
             const valueType = method.subscribeType
-                ? mapSubscribeType(method.subscribeType)
+                ? mapSubscribeType(method.subscribeType, typeNames)
                 : 'unknown';
             returnType = 'void';
-            // Transform params: replace callable with callback signature
             const callbackParam = `callback: (value: ${valueType}) => void`;
             const nonCallbackParams = method.params.filter((p) => !p.isCallable);
             const allParams = [
-                ...nonCallbackParams.map((p) => emitParam(p)),
+                ...nonCallbackParams.map((p) => emitParam(p, typeNames)),
                 callbackParam,
             ];
             return `${method.name}(${allParams.join(', ')}): ${returnType};`;
@@ -89,32 +175,48 @@ function emitMethodSignature(method: ServiceMethod): string {
 /**
  * Emit a single parameter declaration.
  */
-function emitParam(param: ParamDecl): string {
+function emitParam(
+    param: ParamDecl,
+    typeNames?: Set<string>,
+): string {
     const tsType = param.type
-        ? mapPhpTypeToTs({ name: param.type } as any, param.nullable)
+        ? mapPhpTypeToTs(
+            { name: param.type } as any,
+            param.nullable,
+            typeNames,
+        )
         : 'unknown';
     return `${param.name}${param.nullable ? '?' : ''}: ${tsType}`;
 }
 
 /**
  * Infer the yielded type for a stream method.
- * Uses the first PHPDoc-like pattern or falls back to the first param type.
  */
-function inferStreamType(method: ServiceMethod): string {
-    // Stream methods typically yield the same type as the first parameter or a generic type
-    if (method.returnType === 'Iterator' || method.returnType === '\\Iterator' || method.returnType === 'iterable') {
-        // Try to infer from return type annotation in docblock is not available,
-        // fall back to first param type or generic
+function inferStreamType(
+    method: ServiceMethod,
+    typeNames?: Set<string>,
+): string {
+    if (
+        method.returnType === 'Iterator'
+        || method.returnType === '\\Iterator'
+        || method.returnType === 'iterable'
+    ) {
         if (method.params.length > 0) {
             const p = method.params[0];
             if (p.type) {
-                return mapPhpTypeToTs({ name: p.type } as any, false);
+                return mapPhpTypeToTs(
+                    { name: p.type } as any,
+                    false,
+                    typeNames,
+                );
             }
         }
     } else if (method.returnType) {
-        // If return type is something specific like Generator<int>
-        // (not handled by php-parser for parameterized generics), fall through
-        const mapped = mapPhpTypeToTs({ name: method.returnType } as any, method.returnNullable);
+        const mapped = mapPhpTypeToTs(
+            { name: method.returnType } as any,
+            method.returnNullable,
+            typeNames,
+        );
         if (mapped !== 'unknown') return mapped;
     }
 

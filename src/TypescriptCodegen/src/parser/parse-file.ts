@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { Engine } from 'php-parser';
 import type { Program } from 'php-parser';
 import { extractContracts } from './interface-extractor.js';
-import type { ServiceContract } from '../types.js';
+import { extractClasses } from './class-extractor.js';
+import type { ParsedFile } from '../types.js';
 
 const parser = new Engine({
     parser: {
@@ -16,9 +17,9 @@ const parser = new Engine({
 });
 
 /**
- * Parse a single PHP file and extract service contracts.
+ * Parse a single PHP file and extract service contracts, enums, and classes.
  */
-export function parsePhpFile(filePath: string): ServiceContract[] {
+export function parsePhpFile(filePath: string): ParsedFile {
     const source = readFileSync(filePath, 'utf-8');
 
     let ast: Program;
@@ -26,8 +27,11 @@ export function parsePhpFile(filePath: string): ServiceContract[] {
         ast = parser.parseCode(source, filePath) as unknown as Program;
     } catch (err) {
         console.error(`[warn] Failed to parse ${filePath}:`, (err as Error).message);
-        return [];
+        return { contracts: [], enums: [], classes: [] };
     }
 
-    return extractContracts(ast, filePath);
+    const { contracts, enums } = extractContracts(ast, filePath);
+    const classes = extractClasses(ast, filePath);
+
+    return { contracts, enums, classes };
 }

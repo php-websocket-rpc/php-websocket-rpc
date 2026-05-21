@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { emitInterfaces } from './emit-ts-interfaces';
-import type { ServiceContract } from '../types';
+import { emitInterfaces, emitEnumTypes } from './emit-ts-interfaces';
+import type { ServiceContract, EnumDecl } from '../types';
 
 describe('emitInterfaces', () => {
     it('should emit a call method with number params and Promise<number> return', () => {
@@ -138,7 +138,7 @@ describe('emitInterfaces', () => {
         };
 
         const output = emitInterfaces([svc]);
-        expect(output).toContain('// ───── App\\Service\\Test ─────');
+        expect(output).toContain('// ───── App\\\\Service\\\\Test ─────');
     });
 
     it('should handle multiple services', () => {
@@ -154,6 +154,40 @@ describe('emitInterfaces', () => {
         const output = emitInterfaces([svc1, svc2]);
         expect(output).toContain('interface AProxy');
         expect(output).toContain('interface BProxy');
+    });
+
+    it('should use enum type names in method params when enumNames is provided', () => {
+        const svc: ServiceContract = {
+            namespace: '',
+            name: 'ConfigService',
+            fqcn: 'ConfigService',
+            sourceFile: 'test.php',
+            methods: [
+                {
+                    name: 'setStatus',
+                    params: [{ name: 'status', type: 'Status', nullable: false, isVariadic: false, isCallable: false }],
+                    returnType: 'void',
+                    returnNullable: false,
+                    pattern: 'notify',
+                    channel: null,
+                    subscribeType: null,
+                },
+                {
+                    name: 'getStatus',
+                    params: [],
+                    returnType: 'Status',
+                    returnNullable: false,
+                    pattern: 'call',
+                    channel: null,
+                    subscribeType: null,
+                },
+            ],
+        };
+
+        const enumNames = new Set(['Status']);
+        const output = emitInterfaces([svc], enumNames);
+        expect(output).toContain('setStatus(status: Status): void;');
+        expect(output).toContain('getStatus(): Promise<Status>;');
     });
 
     it('should handle nullable return types', () => {
@@ -177,5 +211,87 @@ describe('emitInterfaces', () => {
 
         const output = emitInterfaces([svc]);
         expect(output).toContain('Promise<string | null>');
+    });
+});
+
+describe('emitEnumTypes', () => {
+    it('should emit a string-backed enum type', () => {
+        const enums: EnumDecl[] = [{
+            namespace: '',
+            name: 'Status',
+            fqcn: 'Status',
+            backingType: 'string',
+            cases: [
+                { name: 'Active', value: 'active' },
+                { name: 'Inactive', value: 'inactive' },
+            ],
+            sourceFile: 'test.php',
+        }];
+
+        const output = emitEnumTypes(enums);
+        expect(output).toContain("export type Status = 'active' | 'inactive';");
+    });
+
+    it('should emit an int-backed enum type', () => {
+        const enums: EnumDecl[] = [{
+            namespace: '',
+            name: 'Priority',
+            fqcn: 'Priority',
+            backingType: 'int',
+            cases: [
+                { name: 'Low', value: 1 },
+                { name: 'High', value: 2 },
+            ],
+            sourceFile: 'test.php',
+        }];
+
+        const output = emitEnumTypes(enums);
+        expect(output).toContain('export type Priority = 1 | 2;');
+    });
+
+    it('should emit a unit enum type (no backing value)', () => {
+        const enums: EnumDecl[] = [{
+            namespace: '',
+            name: 'Unit',
+            fqcn: 'Unit',
+            backingType: null,
+            cases: [
+                { name: 'Draft', value: null },
+                { name: 'Published', value: null },
+            ],
+            sourceFile: 'test.php',
+        }];
+
+        const output = emitEnumTypes(enums);
+        expect(output).toContain("export type Unit = 'Draft' | 'Published';");
+    });
+
+    it('should emit multiple enum types', () => {
+        const enums: EnumDecl[] = [
+            {
+                namespace: '',
+                name: 'Status',
+                fqcn: 'Status',
+                backingType: 'string',
+                cases: [{ name: 'Active', value: 'active' }],
+                sourceFile: 'test.php',
+            },
+            {
+                namespace: '',
+                name: 'Priority',
+                fqcn: 'Priority',
+                backingType: 'int',
+                cases: [{ name: 'Low', value: 1 }],
+                sourceFile: 'test.php',
+            },
+        ];
+
+        const output = emitEnumTypes(enums);
+        expect(output).toContain("export type Status = 'active';");
+        expect(output).toContain('export type Priority = 1;');
+    });
+
+    it('should return empty string for empty enum list', () => {
+        expect(emitEnumTypes([])).toBe('');
     });
 });

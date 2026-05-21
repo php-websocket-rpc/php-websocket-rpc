@@ -2,9 +2,9 @@ import { Command } from 'commander';
 import { writeFileSync, existsSync, statSync } from 'node:fs';
 import { globSync } from 'glob';
 import { parsePhpFile } from './parser/parse-file.js';
-import { emitInterfaces } from './generator/emit-ts-interfaces.js';
+import { emitInterfaces, emitEnumTypes, emitClassInterfaces } from './generator/emit-ts-interfaces.js';
 import { emitProxyConfigs } from './generator/emit-proxy-configs.js';
-import type { ServiceContract } from './types.js';
+import type { ServiceContract, EnumDecl, ClassDecl } from './types.js';
 
 export interface CliOptions {
     input: string[];
@@ -47,20 +47,43 @@ export function runCodegen(options: CliOptions): void {
     }
 
     const allContracts: ServiceContract[] = [];
+    const allEnums: EnumDecl[] = [];
+    const allClasses: ClassDecl[] = [];
 
     for (const file of files) {
-        const contracts = parsePhpFile(file);
-        allContracts.push(...contracts);
+        const result = parsePhpFile(file);
+        allContracts.push(...result.contracts);
+        allEnums.push(...result.enums);
+        allClasses.push(...result.classes);
     }
 
-    if (allContracts.length === 0) {
-        console.log('No RPC contract interfaces found.');
+    const enumNames = new Set(allEnums.map((e) => e.name));
+    const classNames = new Set(allClasses.map((c) => c.name));
+    const typeNames = new Set([...enumNames, ...classNames]);
+
+    if (allContracts.length === 0 && allEnums.length === 0 && allClasses.length === 0) {
+        console.log('No RPC contract interfaces, enums, or classes found.');
         return;
     }
 
-    console.log(`Found ${allContracts.length} contract(s) in ${files.length} file(s):`);
-    for (const c of allContracts) {
-        console.log(`  ${c.fqcn} (${c.methods.length} methods)`);
+    if (allContracts.length > 0) {
+        console.log(`Found ${allContracts.length} contract(s) in ${files.length} file(s):`);
+        for (const c of allContracts) {
+            console.log(`  ${c.fqcn} (${c.methods.length} methods)`);
+        }
+    }
+    if (allEnums.length > 0) {
+        console.log(`Found ${allEnums.length} enum(s):`);
+        for (const e of allEnums) {
+            const backing = e.backingType ? `: ${e.backingType}` : '';
+            console.log(`  ${e.fqcn}${backing} (${e.cases.length} cases)`);
+        }
+    }
+    if (allClasses.length > 0) {
+        console.log(`Found ${allClasses.length} DTO class(es):`);
+        for (const c of allClasses) {
+            console.log(`  ${c.fqcn} (${c.properties.length} properties)`);
+        }
     }
 
     // Generate output
@@ -76,7 +99,11 @@ export function runCodegen(options: CliOptions): void {
         parts.push('');
     }
 
-    parts.push(emitInterfaces(allContracts));
+    // Class interfaces first, then enums, then contract interfaces, then configs
+    // (so each section can reference types from earlier sections)
+    parts.push(emitClassInterfaces(allClasses, typeNames));
+    parts.push(emitEnumTypes(allEnums));
+    parts.push(emitInterfaces(allContracts, typeNames));
     parts.push('');
     parts.push(emitProxyConfigs(allContracts));
 
@@ -103,3 +130,6 @@ export function main(): void {
 
     runCodegen(opts);
 }
+
+// Auto-run when executed directly
+main();

@@ -15,6 +15,7 @@ export function createContractProxy<T extends object>(
 ): T {
     const {
         service,
+        call = [],
         stream = [],
         subscribe = [],
         publish: publishMethods = [],
@@ -23,6 +24,7 @@ export function createContractProxy<T extends object>(
         classMap,
     } = options;
 
+    const callSet = new Set(call);
     const streamSet = new Set(stream);
     const subscribeSet = new Set(subscribe);
     const publishSet = new Set(publishMethods);
@@ -124,10 +126,20 @@ export function createContractProxy<T extends object>(
                 };
             }
 
-            // Default: Call pattern
-            return (...args: unknown[]): Promise<unknown> => {
-                return client.call(service, methodName, args)
-                    .then(decodeWireValue);
+            // Call pattern (explicit check for listed methods, fallback for any unlisted)
+            if (callSet.has(methodName) || (callSet.size === 0 && !streamSet.has(methodName) && !subscribeSet.has(methodName) && !publishSet.has(methodName) && !notifySet.has(methodName))) {
+                return (...args: unknown[]): Promise<unknown> => {
+                    return client.call(service, methodName, args)
+                        .then(decodeWireValue);
+                };
+            }
+
+            // Unknown method — throw a helpful error
+            return (): never => {
+                throw new Error(
+                    `Method "${methodName}" is not configured in ProxyOptions for service "${service}". `
+                    + `Add it to one of: call, stream, subscribe, publish, notify.`,
+                );
             };
         },
     });

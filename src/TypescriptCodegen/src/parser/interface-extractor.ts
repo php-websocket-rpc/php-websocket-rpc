@@ -5,24 +5,28 @@ import type {
     Method,
     Parameter,
     Identifier,
+    Enum,
+    EnumCase,
 } from 'php-parser';
-import type { ServiceContract, ServiceMethod, ParamDecl } from '../types.js';
+import type { ServiceContract, ServiceMethod, ParamDecl, EnumDecl, ParsedFile } from '../types.js';
 import { resolveAttributes } from './attribute-resolver.js';
 import { detectPattern } from './pattern-detector.js';
 
 /**
- * Extract service contracts from a parsed PHP AST (Program node).
+ * Extract service contracts and enums from a parsed PHP AST (Program node).
  */
 export function extractContracts(
     ast: Program,
     sourceFile: string,
-): ServiceContract[] {
+): ParsedFile {
     const contracts: ServiceContract[] = [];
+    const enums: EnumDecl[] = [];
 
-    // Walk top-level children — find Namespace and Interface declarations
+    // Walk top-level children — find Namespace, Interface, Enum declarations
     for (const child of ast.children) {
         if (child.kind === 'namespace') {
-            extractFromNamespace(child as Namespace, contracts, sourceFile);
+            const ns = child as Namespace;
+            extractFromNamespace(ns, contracts, enums, sourceFile);
         } else if (child.kind === 'interface') {
             // Interface at file level (no namespace)
             const contract = extractInterface(
@@ -31,18 +35,23 @@ export function extractContracts(
                 sourceFile,
             );
             if (contract) contracts.push(contract);
+        } else if (child.kind === 'enum') {
+            // Enum at file level (no namespace)
+            const enumDecl = extractEnum(child as Enum, '', sourceFile);
+            if (enumDecl) enums.push(enumDecl);
         }
     }
 
-    return contracts;
+    return { contracts, enums, classes: [] };
 }
 
 /**
- * Extract contracts from within a namespace block.
+ * Extract contracts and enums from within a namespace block.
  */
 function extractFromNamespace(
     ns: Namespace,
     contracts: ServiceContract[],
+    enums: EnumDecl[],
     sourceFile: string,
 ): void {
     const namespaceName = resolveNamespaceName(ns);
@@ -55,15 +64,21 @@ function extractFromNamespace(
                 sourceFile,
             );
             if (contract) contracts.push(contract);
+        } else if (child.kind === 'enum') {
+            const enumDecl = extractEnum(child as Enum, namespaceName, sourceFile);
+            if (enumDecl) enums.push(enumDecl);
         }
     }
 }
 
 /**
  * Resolve the namespace name from a Namespace node.
+ * php-parser can return the name as a plain string or as an Identifier object.
  */
 function resolveNamespaceName(ns: Namespace): string {
-    if (ns.name && typeof ns.name === 'object' && 'name' in ns.name) {
+    if (!ns.name) return '';
+    if (typeof ns.name === 'string') return ns.name;
+    if (typeof ns.name === 'object' && 'name' in ns.name) {
         return (ns.name as { name: string }).name;
     }
     return '';
@@ -184,6 +199,77 @@ function resolveNodeName(
         return (node as { name: string }).name;
     }
     return null;
+}
+
+/**
+ * Extract the raw value from an AST node or primitive.
+ * php-parser returns AST nodes for enum case values (e.g. { kind: 'string', value: 'active' }).
+ */
+function extractCaseValue(
+    value: unknown,
+): string | number | null {
+    if (value === null || value === undefined) return null;
+
+    // Handle raw primitives (fallback)
+    if (typeof value === 'string' || typeof value === 'number') return value;
+
+    // Handle AST node objects
+    if (typeof value === 'object' && value !== null) {
+        const node = value as Record<string, unknown>;
+        if (node.kind === 'string' && typeof node.value === 'string') {
+            return node.value;
+        }
+        if (node.kind === 'number') {
+            const num = String(node.value);
+            return parseInt(num, 10);
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Extract a single EnumDecl from an Enum AST node.
+ */
+function extractEnum(
+    enumNode: Enum,
+    namespace: string,
+    sourceFile: string,
+): EnumDecl | null {
+    const name = resolveNodeName(enumNode.name);
+    if (!name) return null;
+
+    // Determine backing type from valueType AST node
+    const backingType = enumNode.valueType
+        ? resolveTypeName(enumNode.valueType)
+        : null;
+
+    // Extract cases
+    const cases: { name: string; value: string | number | null }[] = [];
+
+    for (const member of enumNode.body) {
+        if (member.kind === 'enumcase') {
+            const ec = member as unknown as EnumCase;
+            const caseName = resolveNodeName(ec.name);
+            if (caseName) {
+                cases.push({
+                    name: caseName,
+                    value: extractCaseValue(ec.value),
+                });
+            }
+        }
+    }
+
+    const fqcn = namespace ? `${namespace}\\${name}` : name;
+
+    return {
+        namespace,
+        name,
+        fqcn,
+        backingType,
+        cases,
+        sourceFile,
+    };
 }
 
 /**
