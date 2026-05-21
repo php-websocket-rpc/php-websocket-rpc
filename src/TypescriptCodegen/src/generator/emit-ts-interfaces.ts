@@ -122,7 +122,7 @@ export function emitClassMap(classes: ClassDecl[]): string {
 
     for (const cls of classes) {
         const escapedFqcn = cls.fqcn.replace(/\\/g, '\\\\');
-        lines.push(`    '${escapedFqcn}': (data) => data as ${cls.name},`);
+        lines.push(`    '${escapedFqcn}': (data) => data as unknown as ${cls.name},`);
     }
 
     lines.push('};');
