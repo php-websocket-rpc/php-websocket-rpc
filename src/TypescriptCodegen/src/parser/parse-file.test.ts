@@ -112,7 +112,7 @@ describe('parsePhpFile', () => {
 
             expect(contracts).toHaveLength(0);
             expect(enums).toHaveLength(0);
-            expect(classes).toHaveLength(2);
+            expect(classes).toHaveLength(5);
 
             const msg = classes.find((c) => c.name === 'Message');
             expect(msg).toBeDefined();
@@ -123,6 +123,20 @@ describe('parsePhpFile', () => {
             expect(order).toBeDefined();
             expect(order!.fqcn).toBe('App\\Dto\\Order');
             expect(order!.properties).toHaveLength(3);
+
+            // Inheritance
+            const chatNotif = classes.find((c) => c.name === 'ChatNotification');
+            expect(chatNotif).toBeDefined();
+            expect(chatNotif!.extendsFqcn).toBeNull();
+
+            const msgNotif = classes.find((c) => c.name === 'MessageNotification');
+            expect(msgNotif).toBeDefined();
+            expect(msgNotif!.extendsFqcn).toBe('App\\Dto\\ChatNotification');
+            expect(msgNotif!.properties).toHaveLength(3);
+
+            const deep = classes.find((c) => c.name === 'DeepChild');
+            expect(deep).toBeDefined();
+            expect(deep!.extendsFqcn).toBe('App\\Dto\\MessageNotification');
         });
 
         it('should return classes alongside contracts and enums', () => {

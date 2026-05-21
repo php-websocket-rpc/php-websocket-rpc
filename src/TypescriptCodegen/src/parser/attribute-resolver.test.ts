@@ -88,4 +88,39 @@ describe('resolveAttributes', () => {
         );
         expect(attrs).toHaveLength(0);
     });
+
+    describe('::class resolution', () => {
+        it('should resolve short class name from ::class in named argument', () => {
+            const attrs = parseMethodAttributes(
+                '#[RpcSubscribe(channel: \'chat\', type: ChatNotification::class)] public function onNotif(callable $cb): void',
+            );
+            expect(attrs).toHaveLength(1);
+            expect(attrs[0].args['type']).toBe('ChatNotification');
+        });
+
+        it('should resolve short class name from FQCN ::class', () => {
+            const attrs = parseMethodAttributes(
+                '#[RpcSubscribe(channel: \'chat\', type: \\App\\Contract\\ChatNotification::class)] public function onNotif(callable $cb): void',
+            );
+            expect(attrs).toHaveLength(1);
+            expect(attrs[0].args['type']).toBe('ChatNotification');
+        });
+
+        it('should resolve ::class in positional argument', () => {
+            const attrs = parseMethodAttributes(
+                '#[RpcSubscribe(ChatNotification::class)] public function onNotif(callable $cb): void',
+            );
+            expect(attrs).toHaveLength(1);
+            expect(attrs[0].args['_0']).toBe('ChatNotification');
+        });
+
+        it('should return null for non-class staticlookup', () => {
+            // Just verify it doesn't crash on unexpected staticlookup
+            const attrs = parseMethodAttributes(
+                '#[RpcSubscribe(type: Foo::class)] public function onNotif(callable $cb): void',
+            );
+            expect(attrs).toHaveLength(1);
+            expect(attrs[0].args['type']).toBe('Foo');
+        });
+    });
 });

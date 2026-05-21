@@ -103,6 +103,15 @@ function extractLiteralValue(node: any): string | null {
         case 'identifier':
             // A constant reference like `PHP_INT_MAX`
             return node.name as string || null;
+        case 'staticlookup':
+            // Foo::class — extract the short class name
+            // node.what is { kind: 'name', name: 'Foo' } or { kind: 'name', name: '\Ns\Foo' }
+            const raw = node.what?.name;
+            if (typeof raw === 'string') {
+                const parts = raw.replace(/^\\/, '').split('\\');
+                return parts[parts.length - 1] || null;
+            }
+            return null;
         default:
             return null;
     }

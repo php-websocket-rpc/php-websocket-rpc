@@ -136,6 +136,78 @@ export const ChatServiceConfig = {
 } satisfies ProxyOptions;
 ```
 
+## Wire Deserialization (classMap)
+
+When the PHP server sends value objects over the wire, they are serialized as `[FQCN, props]` — the fully-qualified class name followed by its properties. The codegen generates a `classMap` that maps these FQCNs to their TypeScript interfaces so the client can deserialize them automatically.
+
+```typescript
+import { RpcClient, createContractProxy } from '@php-websocket-rpc/client';
+import { ChatServiceProxy, ChatServiceConfig, classMap } from './generated/rpc-types';
+
+const client = await RpcClient.connect('ws://127.0.0.1:9502/rpc');
+
+const chat = createContractProxy<ChatServiceProxy>(client, {
+    ...ChatServiceConfig,
+    classMap,  // ← enables automatic wire deserialization
+});
+
+// When the server returns a typed value object like [FQCN, props],
+// the client uses classMap to reconstruct it as the correct TypeScript type
+chat.onMessage((msg) => console.log(msg));  // msg is properly typed
+```
+
+The generated `classMap` looks like:
+
+```typescript
+export const classMap: Record<string, (data: Record<string, unknown>) => unknown> = {
+    'App\\Contract\\ChatNotification': (data) => data as ChatNotification,
+    'App\\Contract\\MessageNotification': (data) => data as MessageNotification,
+};
+```
+
+Only class DTOs get entries. Enums are scalars on the wire (string or int) and don't need deserialization.
+
+## Naming Convention
+
+All PHP contracts, DTOs, and enums processed by the codegen **must** share the same namespace and be placed in the same folder (or a folder tree fed to `--input`). This ensures:
+
+- Type names are unique within the generated file.
+- The `classMap` can resolve all FQCNs without collisions.
+- Contract interface proxies can reference DTO and enum types correctly.
+
+**Recommended project structure:**
+
+```
+src/
+  Contract/
+    ChatEventInterface.php
+    ChatNotification.php
+    MessageNotification.php
+    MessageSenderType.php
+```
+
+**CLI invocation:**
+
+```bash
+php-rpc-codegen --input src/Contract/ --output src/generated/rpc-types.ts
+```
+
+## Type Mapping
+
+| PHP | TypeScript |
+|-----|-----------|
+| `int` / `float` | `number` |
+| `string` | `string` |
+| `bool` | `boolean` |
+| `void` | `void` |
+| `mixed` / `object` | `unknown` |
+| `array` | `unknown[]` |
+| `?Type` | `Type \| null` |
+| `callable` | `(...args: unknown[]) => unknown` |
+| PHP enum (parsed) | enum type name (union of literals) |
+| PHP class DTO (parsed) | class interface name |
+| custom class (not parsed) | `Record<string, unknown>` |
+
 ## Pattern Detection
 
 | PHP Signature | Detected Pattern | TS Return Type |

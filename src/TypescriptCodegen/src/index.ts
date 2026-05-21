@@ -4,7 +4,7 @@ export { extractClasses } from './parser/class-extractor.js';
 export { resolveAttributes } from './parser/attribute-resolver.js';
 export { detectPattern } from './parser/pattern-detector.js';
 export { mapPhpTypeToTs, mapSubscribeType } from './parser/type-mapper.js';
-export { emitInterfaces, emitEnumTypes, emitClassInterfaces } from './generator/emit-ts-interfaces.js';
+export { emitInterfaces, emitEnumTypes, emitClassInterfaces, emitClassMap } from './generator/emit-ts-interfaces.js';
 export { emitProxyConfigs } from './generator/emit-proxy-configs.js';
 export { runCodegen, main as cli } from './cli.js';
 export type {

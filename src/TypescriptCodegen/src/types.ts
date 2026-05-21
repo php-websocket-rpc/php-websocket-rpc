@@ -77,6 +77,7 @@ export interface ClassDecl {
     fqcn: string;
     properties: PropertyDecl[];
     sourceFile: string;
+    extendsFqcn: string | null; // FQCN of parent class, null if none
 }
 
 /**

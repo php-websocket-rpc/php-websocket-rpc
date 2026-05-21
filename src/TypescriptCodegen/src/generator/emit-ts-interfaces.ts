@@ -61,7 +61,18 @@ function emitClassInterface(
 
     const lines: string[] = [];
     lines.push(`// ───── ${cls.fqcn.replace(/\\/g, '\\\\')} ─────`);
-    lines.push(`export interface ${cls.name} {`);
+
+    // Only emit `extends` when the parent class is also in the parsed type set.
+    // This avoids generating `extends Payload` for framework base classes
+    // that don't have a corresponding TypeScript interface in the output.
+    let extendsClause = '';
+    if (cls.extendsFqcn) {
+        const parentShortName = cls.extendsFqcn.split('\\').pop()!;
+        if (typeNames?.has(parentShortName)) {
+            extendsClause = ` extends ${parentShortName}`;
+        }
+    }
+    lines.push(`export interface ${cls.name}${extendsClause} {`);
 
     for (const prop of cls.properties) {
         const tsType = prop.type
@@ -77,6 +88,47 @@ function emitClassInterface(
 
     lines.push('}');
     return lines.join('\n') + '\n';
+}
+
+// ─── ClassMap: FQCN-to-Type mapping for wire deserialization ─────
+
+/**
+ * Generate a `classMap` constant that maps PHP FQCN strings to factory
+ * functions for wire deserialization.
+ *
+ * The TS client's `decodeWireValue()` in contract-proxy.ts uses this map
+ * when it receives a wire value in `[FQCN, props]` format — it looks up
+ * the FQCN in classMap and calls the factory to reconstruct the typed object.
+ *
+ * Only class DTOs generate entries. Enums are scalars on the wire (string/int),
+ * so they don't need deserialization.
+ *
+ * Usage in user code:
+ * ```typescript
+ * import { ChatServiceConfig, classMap } from './generated/contracts';
+ * const proxy = createContractProxy(client, {
+ *     ...ChatServiceConfig,
+ *     classMap,
+ * });
+ * ```
+ */
+export function emitClassMap(classes: ClassDecl[]): string {
+    if (classes.length === 0) return '';
+
+    const lines: string[] = [];
+    lines.push('// ───── Wire deserialization map ─────');
+    lines.push('// Maps PHP FQCN → factory function for [FQCN, props] wire format.');
+    lines.push('export const classMap: Record<string, (data: Record<string, unknown>) => unknown> = {');
+
+    for (const cls of classes) {
+        const escapedFqcn = cls.fqcn.replace(/\\/g, '\\\\');
+        lines.push(`    '${escapedFqcn}': (data) => data as ${cls.name},`);
+    }
+
+    lines.push('};');
+    lines.push('');
+
+    return lines.join('\n');
 }
 
 // ─── Contract Interfaces ─────────────────────────────────────────

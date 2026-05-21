@@ -87,11 +87,54 @@ describe('class-extractor', () => {
         const path = resolve(fixturesDir(), 'dto-contract.php');
         const { classes } = parsePhpFile(path);
 
-        expect(classes).toHaveLength(2);
+        expect(classes).toHaveLength(5);
         for (const cls of classes) {
             expect(cls.namespace).toBe('App\\Dto');
             expect(cls.fqcn).toContain('App\\Dto\\');
             expect(cls.sourceFile).toBe(path);
         }
+    });
+
+    describe('inheritance (extends)', () => {
+        it('should set extendsFqcn to null for root classes', () => {
+            const path = resolve(fixturesDir(), 'dto-contract.php');
+            const { classes } = parsePhpFile(path);
+
+            const msg = classes.find((c) => c.name === 'Message');
+            expect(msg).toBeDefined();
+            expect(msg!.extendsFqcn).toBeNull();
+
+            const chat = classes.find((c) => c.name === 'ChatNotification');
+            expect(chat).toBeDefined();
+            expect(chat!.extendsFqcn).toBeNull();
+        });
+
+        it('should set extendsFqcn for classes that extend another', () => {
+            const path = resolve(fixturesDir(), 'dto-contract.php');
+            const { classes } = parsePhpFile(path);
+
+            const msgNotif = classes.find((c) => c.name === 'MessageNotification');
+            expect(msgNotif).toBeDefined();
+            expect(msgNotif!.extendsFqcn).toBe('App\\Dto\\ChatNotification');
+
+            const deep = classes.find((c) => c.name === 'DeepChild');
+            expect(deep).toBeDefined();
+            expect(deep!.extendsFqcn).toBe('App\\Dto\\MessageNotification');
+        });
+
+        it('should only include own properties for child classes', () => {
+            const path = resolve(fixturesDir(), 'dto-contract.php');
+            const { classes } = parsePhpFile(path);
+
+            const msgNotif = classes.find((c) => c.name === 'MessageNotification');
+            expect(msgNotif).toBeDefined();
+            // Should only have messageId, senderId, text (not conversationId, type from parent)
+            expect(msgNotif!.properties).toHaveLength(3);
+            expect(msgNotif!.properties.map((p) => p.name)).toEqual([
+                'messageId',
+                'senderId',
+                'text',
+            ]);
+        });
     });
 });

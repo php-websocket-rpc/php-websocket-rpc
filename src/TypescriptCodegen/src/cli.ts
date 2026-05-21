@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { writeFileSync, existsSync, statSync } from 'node:fs';
 import { globSync } from 'glob';
 import { parsePhpFile } from './parser/parse-file.js';
-import { emitInterfaces, emitEnumTypes, emitClassInterfaces } from './generator/emit-ts-interfaces.js';
+import { emitInterfaces, emitEnumTypes, emitClassInterfaces, emitClassMap } from './generator/emit-ts-interfaces.js';
 import { emitProxyConfigs } from './generator/emit-proxy-configs.js';
 import type { ServiceContract, EnumDecl, ClassDecl } from './types.js';
 
@@ -99,9 +99,10 @@ export function runCodegen(options: CliOptions): void {
         parts.push('');
     }
 
-    // Class interfaces first, then enums, then contract interfaces, then configs
+    // Class interfaces first, then classMap, then enums, then contract interfaces, then configs
     // (so each section can reference types from earlier sections)
     parts.push(emitClassInterfaces(allClasses, typeNames));
+    parts.push(emitClassMap(allClasses));
     parts.push(emitEnumTypes(allEnums));
     parts.push(emitInterfaces(allContracts, typeNames));
     parts.push('');

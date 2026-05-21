@@ -26,3 +26,23 @@ class Order
         public ?string $note = null,
     ) {}
 }
+
+// ─── Inheritance ──────────────────────────────────────────────
+
+class ChatNotification
+{
+    public string $conversationId;
+    public string $type;
+}
+
+class MessageNotification extends ChatNotification
+{
+    public string $messageId;
+    public string $senderId;
+    public string $text;
+}
+
+class DeepChild extends MessageNotification
+{
+    public string $extra;
+}

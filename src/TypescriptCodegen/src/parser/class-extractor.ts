@@ -66,6 +66,19 @@ function extractClass(
     const name = resolveNodeName(classNode.name);
     if (!name) return null;
 
+    // Resolve parent class (extends)
+    let extendsFqcn: string | null = null;
+    if (classNode.extends) {
+        const parentName = resolveNodeName(classNode.extends);
+        if (parentName) {
+            // If parentName starts with \, it's already fully qualified; strip the leading \
+            // Otherwise prepend the current namespace
+            extendsFqcn = parentName.startsWith('\\')
+                ? parentName.replace(/^\\/, '')
+                : namespace ? `${namespace}\\${parentName}` : parentName;
+        }
+    }
+
     const properties: PropertyDecl[] = [];
     const seen = new Set<string>();
 
@@ -132,6 +145,7 @@ function extractClass(
         fqcn,
         properties,
         sourceFile,
+        extendsFqcn,
     };
 }
 
