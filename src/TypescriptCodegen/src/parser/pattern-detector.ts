@@ -26,8 +26,10 @@ export function detectPattern(
 
     for (const attr of attributes) {
         switch (attr.name) {
-            case 'RpcStream':
-                return { pattern: 'stream', channel: null, subscribeType: null };
+            case 'RpcStream': {
+                const streamType = attr.args['type'] ?? null;
+                return { pattern: 'stream', channel: null, subscribeType: streamType };
+            }
 
             case 'RpcSubscribe': {
                 // First positional arg or 'channel' named arg

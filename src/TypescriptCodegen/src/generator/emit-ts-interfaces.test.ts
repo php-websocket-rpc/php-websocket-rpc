@@ -71,7 +71,7 @@ describe('emitInterfaces', () => {
         };
 
         const output = emitInterfaces([svc]);
-        expect(output).toContain('count(limit: number): AsyncIterable<number>;');
+        expect(output).toContain('count(limit: number): AsyncIterable<unknown>;');
     });
 
     it('should emit a subscribe method with callback parameter', () => {

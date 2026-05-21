@@ -243,27 +243,29 @@ function emitParam(
 
 /**
  * Infer the yielded type for a stream method.
+ *
+ * Priority:
+ *   1. `subscribeType` from `#[RpcStream(type: ...)]` or `#[RpcSubscribe(type: ...)]`
+ *   2. Return type annotation if it's a specific class (not just `Iterator`/`iterable`)
+ *   3. `unknown` — never guess from parameter types
  */
 function inferStreamType(
     method: ServiceMethod,
     typeNames?: Set<string>,
 ): string {
+    // 1. Use explicit type from #[RpcStream(type: ...)]
+    if (method.subscribeType) {
+        const mapped = mapSubscribeType(method.subscribeType, typeNames);
+        if (mapped !== 'unknown') return mapped;
+    }
+
+    // 2. If return type is a specific class (not bare Iterator/iterable), use it
     if (
-        method.returnType === 'Iterator'
-        || method.returnType === '\\Iterator'
-        || method.returnType === 'iterable'
+        method.returnType
+        && method.returnType !== 'Iterator'
+        && method.returnType !== '\\Iterator'
+        && method.returnType !== 'iterable'
     ) {
-        if (method.params.length > 0) {
-            const p = method.params[0];
-            if (p.type) {
-                return mapPhpTypeToTs(
-                    { name: p.type } as any,
-                    false,
-                    typeNames,
-                );
-            }
-        }
-    } else if (method.returnType) {
         const mapped = mapPhpTypeToTs(
             { name: method.returnType } as any,
             method.returnNullable,
@@ -272,5 +274,6 @@ function inferStreamType(
         if (mapped !== 'unknown') return mapped;
     }
 
+    // 3. Unknown — no guessing
     return 'unknown';
 }
